@@ -15,10 +15,12 @@ fun main() {
     }
 
     fun part1(input: List<String>): Int {
-        var sum = 0;
+        var sum = 0
         for (s in input) {
             val first = findFirstNumber(s)
             val last = findFirstNumber(s.reversed())
+            if (first == null || last == null) continue
+
             val concatenated = "$first$last".toInt()
             sum += concatenated
         }
@@ -26,10 +28,14 @@ fun main() {
     }
 
     // part 2
-    val numberRegex = "".toRegex()
+
 
     fun part2(input: List<String>): Int {
-return 0
+        var sum = 0
+        for (s in input) {
+
+        }
+        return sum
     }
 
     // test if implementation meets criteria from the description:
