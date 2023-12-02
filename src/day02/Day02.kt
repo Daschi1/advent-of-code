@@ -28,6 +28,18 @@ data class Game(val id: Int, val gameSets: List<GameSet> = emptyList()) {
                     it.blue <= cubeLimit.blue
         }
     }
+
+    fun calculateNumberOfFewestCubesRequired(): GameSet {
+        var highestRed = 0
+        var highestGreen = 0
+        var highestBlue = 0
+        for (gameSet in gameSets) {
+            if (gameSet.red > highestRed) highestRed = gameSet.red
+            if (gameSet.green > highestGreen) highestGreen = gameSet.green
+            if (gameSet.blue > highestBlue) highestBlue = gameSet.blue
+        }
+        return GameSet(highestRed, highestGreen, highestBlue)
+    }
 }
 
 data class GameSet(val red: Int = 0, val green: Int = 0, val blue: Int = 0) {
@@ -47,6 +59,10 @@ data class GameSet(val red: Int = 0, val green: Int = 0, val blue: Int = 0) {
             return GameSet(red, green, blue)
         }
     }
+
+    fun calculatePower(): Int {
+        return red * green * blue
+    }
 }
 
 fun main() {
@@ -65,7 +81,13 @@ fun main() {
 
     // part 2
     fun part2(input: List<String>): Int {
-        return input.size
+        var sum = 0
+        for (s in input) {
+            val game = Game.parseFromString(s)
+            val fewestCubesRequired = game.calculateNumberOfFewestCubesRequired()
+            sum += fewestCubesRequired.calculatePower()
+        }
+        return sum
     }
 
     // test if implementation meets criteria from the description:
