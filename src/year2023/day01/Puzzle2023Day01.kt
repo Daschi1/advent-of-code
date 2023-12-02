@@ -1,27 +1,14 @@
-package day01
+package year2023.day01
 
-import println
-import readInput
+import Puzzle
 
 fun main() {
-    // part 1
-    fun findFirstNumber(input: String): Int? {
-        for (char in input) {
-            if (char.isDigit()) {
-                return char.digitToInt()
-            }
-        }
-        return null
-    }
+    val puzzle = Puzzle2023Day01()
+    puzzle.testAndSolveAndPrint()
+}
 
-    fun concatenateFirstAndLastNumber(firstNumberInput: String, lastNumberInput: String): Int? {
-        val first = findFirstNumber(firstNumberInput)
-        val last = findFirstNumber(lastNumberInput.reversed())
-        if (first == null || last == null) return null
-        return "$first$last".toInt()
-    }
-
-    fun part1(input: List<String>): Int {
+class Puzzle2023Day01 : Puzzle<Int, Int>("2023", "01", 142, 281) {
+    override fun solvePart1(input: List<String>): Int {
         var sum = 0
         for (s in input) {
             val concatenated = concatenateFirstAndLastNumber(s, s) ?: continue
@@ -30,8 +17,34 @@ fun main() {
         return sum
     }
 
-    // part 2
-    fun replaceFirstSpelledNumberWithIntegers(input: String): String {
+    override fun solvePart2(input: List<String>): Int {
+        var sum = 0
+        for (s in input) {
+            val forwardReplacedString = replaceFirstSpelledNumberWithIntegers(s)
+            val backwardReplacedString = replaceLastSpelledNumberWithIntegers(s)
+            val concatenated = concatenateFirstAndLastNumber(forwardReplacedString, backwardReplacedString) ?: continue
+            sum += concatenated
+        }
+        return sum
+    }
+
+    private fun findFirstNumber(input: String): Int? {
+        for (char in input) {
+            if (char.isDigit()) {
+                return char.digitToInt()
+            }
+        }
+        return null
+    }
+
+    private fun concatenateFirstAndLastNumber(firstNumberInput: String, lastNumberInput: String): Int? {
+        val first = findFirstNumber(firstNumberInput)
+        val last = findFirstNumber(lastNumberInput.reversed())
+        if (first == null || last == null) return null
+        return "$first$last".toInt()
+    }
+
+    private fun replaceFirstSpelledNumberWithIntegers(input: String): String {
         val regex = "one|two|three|four|five|six|seven|eight|nine".toRegex()
         val matchResult = regex.find(input) ?: return input
 
@@ -50,7 +63,7 @@ fun main() {
         return input.replaceRange(matchResult.range, numericRepresentation)
     }
 
-    fun replaceLastSpelledNumberWithIntegers(input: String): String {
+    private fun replaceLastSpelledNumberWithIntegers(input: String): String {
         val inputReversed = input.reversed()
         val regexReversed = "one|two|three|four|five|six|seven|eight|nine".reversed().toRegex()
         val matchResult = regexReversed.find(inputReversed) ?: return input
@@ -70,26 +83,4 @@ fun main() {
         val replacedReversedString = inputReversed.replaceRange(matchResult.range, numericRepresentation)
         return replacedReversedString.reversed()
     }
-
-    fun part2(input: List<String>): Int {
-        var sum = 0
-        for (s in input) {
-            val forwardReplacedString = replaceFirstSpelledNumberWithIntegers(s)
-            val backwardReplacedString = replaceLastSpelledNumberWithIntegers(s)
-            val concatenated = concatenateFirstAndLastNumber(forwardReplacedString, backwardReplacedString) ?: continue
-            sum += concatenated
-        }
-        return sum
-    }
-
-    // test if implementation meets criteria from the description:
-    val testInput1 = readInput("day01/Day01_test1")
-    check(part1(testInput1) == 142)
-    val testInput2 = readInput("day01/Day01_test2")
-    check(part2(testInput2) == 281)
-
-    // calculate solution
-    val input = readInput("day01/Day01")
-    part1(input).println()
-    part2(input).println()
 }
