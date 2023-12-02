@@ -1,9 +1,37 @@
-package day02
+package year2023.day02
 
-import println
-import readInput
+import Puzzle
 
-data class Game(val id: Int, val gameSets: List<GameSet> = emptyList()) {
+fun main() {
+    val puzzle = Puzzle2023Day02()
+    puzzle.testAndSolveAndPrint()
+}
+
+class Puzzle2023Day02 : Puzzle<Int, Int>("2023", "02", 8, 2286) {
+    override fun solvePart1(input: List<String>): Int {
+        val cubeLimit = GameSet(12, 13, 14)
+        var sum = 0
+        for (s in input) {
+            val game = Game.parseFromString(s)
+            if (game.isPossibleWithLimitedCubes(cubeLimit)) {
+                sum += game.id
+            }
+        }
+        return sum
+    }
+
+    override fun solvePart2(input: List<String>): Int {
+        var sum = 0
+        for (s in input) {
+            val game = Game.parseFromString(s)
+            val fewestCubesRequired = game.calculateNumberOfFewestCubesRequired()
+            sum += fewestCubesRequired.calculatePower()
+        }
+        return sum
+    }
+}
+
+private data class Game(val id: Int, val gameSets: List<GameSet> = emptyList()) {
     companion object {
         fun parseFromString(input: String): Game {
             val gameSetsArray = input.split(":")
@@ -42,7 +70,7 @@ data class Game(val id: Int, val gameSets: List<GameSet> = emptyList()) {
     }
 }
 
-data class GameSet(val red: Int = 0, val green: Int = 0, val blue: Int = 0) {
+private data class GameSet(val red: Int = 0, val green: Int = 0, val blue: Int = 0) {
     companion object {
         fun parseFromString(input: String): GameSet {
             val cubeArray = input.split(",")
@@ -63,41 +91,4 @@ data class GameSet(val red: Int = 0, val green: Int = 0, val blue: Int = 0) {
     fun calculatePower(): Int {
         return red * green * blue
     }
-}
-
-fun main() {
-    // part 1
-    fun part1(input: List<String>): Int {
-        val cubeLimit = GameSet(12, 13, 14)
-        var sum = 0
-        for (s in input) {
-            val game = Game.parseFromString(s)
-            if (game.isPossibleWithLimitedCubes(cubeLimit)) {
-                sum += game.id
-            }
-        }
-        return sum
-    }
-
-    // part 2
-    fun part2(input: List<String>): Int {
-        var sum = 0
-        for (s in input) {
-            val game = Game.parseFromString(s)
-            val fewestCubesRequired = game.calculateNumberOfFewestCubesRequired()
-            sum += fewestCubesRequired.calculatePower()
-        }
-        return sum
-    }
-
-    // test if implementation meets criteria from the description:
-    val testInput1 = readInput("day02/Day02_test1")
-    check(part1(testInput1) == 8)
-    val testInput2 = readInput("day02/Day02_test2")
-    check(part2(testInput2) == 2286)
-
-    // calculate solution
-    val input = readInput("day02/Day02")
-    part1(input).println()
-    part2(input).println()
 }
