@@ -14,7 +14,8 @@ class Puzzle2023Day03 : Puzzle<Int, Int>("2023", "03", 4361, 467835) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val schematic = Schematic(input)
+        return schematic.computeSchematicGears().sumOf { it.gearRatio }
     }
 }
 
@@ -64,7 +65,32 @@ private class Schematic(private val input: List<String>) {
             possibleSchematicSymbols.isNotEmpty()
         }
     }
+
+    fun computeSchematicGears(): List<SchematicGear> {
+        return schematicSymbols.filter { symbol ->
+            symbol.symbol == '*'
+        }.mapNotNull { symbol ->
+            val possibleSchematicNumbers = computeSurroundingNumbers(symbol)
+            if (possibleSchematicNumbers.size == 2) {
+                val ratio = possibleSchematicNumbers[0].number * possibleSchematicNumbers[1].number
+                SchematicGear(ratio)
+            } else null
+        }
+    }
+
+    private fun computeSurroundingNumbers(symbol: SchematicSymbol): List<SchematicNumber> {
+        return schematicNumbers.filter { number ->
+            number.y in IntRange(symbol.y - 1, symbol.y + 1)
+        }.filter { number ->
+            number.x intersects IntRange(symbol.x - 1, symbol.x + 1)
+        }
+    }
 }
 
 private data class SchematicNumber(val number: Int, val y: Int, val x: IntRange)
 private data class SchematicSymbol(val symbol: Char, val y: Int, val x: Int)
+private data class SchematicGear(val gearRatio: Int)
+
+private infix fun IntRange.intersects(range: IntRange): Boolean {
+    return this.last >= range.first && this.first <= range.last
+}
