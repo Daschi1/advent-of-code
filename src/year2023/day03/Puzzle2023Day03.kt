@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day03 : Puzzle<Int, Int>("2023", "03", 4361, -1) {
+class Puzzle2023Day03 : Puzzle<Int, Int>("2023", "03", 4361, 467835) {
     override fun solvePart1(input: List<String>): Int {
         val schematic = Schematic(input)
         return schematic.computeSchematicNumbersAdjacentToSchematicSymbols().sumOf { it.number }
