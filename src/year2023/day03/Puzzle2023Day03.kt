@@ -19,21 +19,8 @@ class Puzzle2023Day03 : Puzzle<Int, Int>("2023", "03", 4361, -1) {
 }
 
 private class Schematic(private val input: List<String>) {
-    private val height: Int
-    private val width: Int
-    private val schematicNumbers: List<SchematicNumber>
-    private val schematicSymbols: List<SchematicSymbol>
-
-    init {
-        assert(input.isNotEmpty()) { "Input list cannot be empty." }
-        assert(input[0].isNotEmpty()) { "First element of input list cannot be empty." }
-
-        height = input.size
-        width = input[0].length
-
-        schematicNumbers = parseSchematicNumbers()
-        schematicSymbols = parseSchematicSymbols()
-    }
+    private val schematicNumbers = parseSchematicNumbers()
+    private val schematicSymbols = parseSchematicSymbols()
 
     private inline fun <T> parseSchematics(
         regexPattern: String,
