@@ -7,6 +7,7 @@ abstract class Puzzle<O, T>(
     private val input = readInput("year$year/day$day/Day$day")
     private val inputTest1 = readInput("year$year/day$day/Day${day}_test1")
     private val inputTest2 = readInput("year$year/day$day/Day${day}_test2")
+
     abstract fun solvePart1(input: List<String>): O
     abstract fun solvePart2(input: List<String>): T
 
