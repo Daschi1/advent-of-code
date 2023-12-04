@@ -42,7 +42,7 @@ private data class Game(val id: Int, val gameSets: List<GameSet> = emptyList()) 
             val setsArray = gameSetsArray[1].split(";")
             val gameSets = mutableListOf<GameSet>()
             for (set in setsArray) {
-                gameSets.addLast(GameSet.parseFromString(set))
+                gameSets.add(GameSet.parseFromString(set))
             }
 
             return Game(gameId, gameSets)
