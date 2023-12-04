@@ -16,12 +16,20 @@ class Puzzle2023Day04 : Puzzle<Int, Int>("2023", "04", 13, 30) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val cards: List<Card> = input.map { Card.parseFromString(it) }
+        val finalCards = mutableListOf<Card>().apply { addAll(cards) }
+
+        var currentCards = Card.calculateCopiedCardsFromWinningAmount(cards, cards)
+        while (currentCards.isNotEmpty()) {
+            finalCards.addAll(currentCards)
+            currentCards = Card.calculateCopiedCardsFromWinningAmount(currentCards, cards)
+        }
+        return finalCards.size
     }
 }
 
 private data class Card(
-    private val number: Int,
+    val number: Int,
     private val winningNumbers: List<Int>,
     private val numbers: List<Int>
 ) {
@@ -41,6 +49,19 @@ private data class Card(
 
             return Card(number, winningNumbers, numbers)
         }
+
+        fun calculateCopiedCardsFromWinningAmount(cards: List<Card>, originalCards: List<Card>): List<Card> {
+            val copiedCards = mutableListOf<Card>()
+            for (card in cards) {
+                val amount = card.calculateAmountOfNumbersInWinningNumbers()
+                for (i in card.number..<card.number + amount) {
+                    if (i >= originalCards.size) break
+                    val copiedCard = originalCards[i].copy()
+                    copiedCards.add(copiedCard)
+                }
+            }
+            return copiedCards
+        }
     }
 
     fun calculatePoints(): Int {
@@ -51,7 +72,7 @@ private data class Card(
         }
     }
 
-    private fun calculateAmountOfNumbersInWinningNumbers(): Int {
+    fun calculateAmountOfNumbersInWinningNumbers(): Int {
         return numbers.count { it in winningNumbers }
     }
 }
