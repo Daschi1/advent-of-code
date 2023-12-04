@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day04 : Puzzle<Int, Int>("2023", "04", -1, -1) {
+class Puzzle2023Day04 : Puzzle<Int, Int>("2023", "04", 13, -1) {
     override fun solvePart1(input: List<String>): Int {
         return input.size
     }
