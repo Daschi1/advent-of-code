@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day06 : Puzzle<Int, Int>("2023", "06", 288, -1) {
+class Puzzle2023Day06 : Puzzle<Int, Int>("2023", "06", 288, 71503) {
     override fun solvePart1(input: List<String>): Int {
         if (input.size != 2) return -1
         val durations = parseInputToIntList(input[0])
