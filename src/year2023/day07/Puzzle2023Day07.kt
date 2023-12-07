@@ -1,40 +1,38 @@
 package year2023.day07
 
 import Puzzle
-import println
 
 fun main() {
     val puzzle = Puzzle2023Day07()
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day07 : Puzzle<Int, Int>("2023", "07", 6440, -1) {
+class Puzzle2023Day07 : Puzzle<Int, Int>("2023", "07", 6440, 5905) {
     override fun solvePart1(input: List<String>): Int {
         val hands = parseHandsFromInput(input)
         var totalWinnings = 0
         for ((i, hand) in hands.sorted().withIndex()) {
             totalWinnings += (i + 1) * hand.bid
         }
-        hands.sorted().filter { it.isFourOfAKind() }.println()
-        totalWinnings.println()
         return totalWinnings
     }
 
     override fun solvePart2(input: List<String>): Int {
+        val hands = parseHandsFromInput(input, true)
         return input.size
     }
 }
 
-private fun parseHandsFromInput(input: List<String>): List<Hand> {
+private fun parseHandsFromInput(input: List<String>, withJokers: Boolean = false): List<Hand> {
     return input.map { s ->
         val split = s.split(" ")
         val hand = split[0]
         val bid = split[1].toInt()
-        Hand(hand, bid)
+        Hand(hand, bid, withJokers)
     }
 }
 
-private data class Hand(val hand: String, val bid: Int) : Comparable<Hand> {
+private data class Hand(val hand: String, val bid: Int, val withJokers: Boolean) : Comparable<Hand> {
     companion object {
         val charValues = mapOf(
             'A' to 14, 'K' to 13, 'Q' to 12, 'J' to 11, 'T' to 10,
