@@ -9,17 +9,21 @@ fun main() {
 
 class Puzzle2023Day07 : Puzzle<Int, Int>("2023", "07", 6440, 5905) {
     override fun solvePart1(input: List<String>): Int {
-        val hands = parseHandsFromInput(input)
+        val hands = parseHandsFromInput(input).sorted()
         var totalWinnings = 0
-        for ((i, hand) in hands.sorted().withIndex()) {
+        for ((i, hand) in hands.withIndex()) {
             totalWinnings += (i + 1) * hand.bid
         }
         return totalWinnings
     }
 
     override fun solvePart2(input: List<String>): Int {
-        val hands = parseHandsFromInput(input, true)
-        return input.size
+        val hands = parseHandsFromInput(input, true).sorted()
+        var totalWinnings = 0
+        for ((i, hand) in hands.withIndex()) {
+            totalWinnings += (i + 1) * hand.bid
+        }
+        return totalWinnings
     }
 }
 
@@ -39,53 +43,69 @@ private data class Hand(val hand: String, val bid: Int, val withJokers: Boolean)
             '9' to 9, '8' to 8, '7' to 7, '6' to 6, '5' to 5,
             '4' to 4, '3' to 3, '2' to 2
         )
+        val charValuesWithJokers = mapOf(
+            'A' to 14, 'K' to 13, 'Q' to 12, 'T' to 10,
+            '9' to 9, '8' to 8, '7' to 7, '6' to 6, '5' to 5,
+            '4' to 4, '3' to 3, '2' to 2, 'J' to 1
+        )
+
+        fun isFiveOfAKind(hand: String): Boolean {
+            return hand.groupingBy { it }.eachCount().any { it.value == 5 }
+        }
+
+        fun isFourOfAKind(hand: String): Boolean {
+            return hand.groupingBy { it }.eachCount().any { it.value == 4 }
+        }
+
+        fun isFullHouse(hand: String): Boolean {
+            val charCounts = hand.groupingBy { it }.eachCount()
+            return charCounts.values.sorted() == listOf(2, 3)
+        }
+
+        fun isThreeOfAKind(hand: String): Boolean {
+            return hand.groupingBy { it }.eachCount().any { it.value == 3 }
+        }
+
+        fun isTwoPair(hand: String): Boolean {
+            val charCounts = hand.groupingBy { it }.eachCount()
+            return charCounts.values.sorted() == listOf(1, 2, 2)
+        }
+
+        fun isOnePair(hand: String): Boolean {
+            val charCounts = hand.groupingBy { it }.eachCount()
+            return charCounts.values.sorted() == listOf(1, 1, 1, 2)
+        }
+
+        fun isHighCard(hand: String): Boolean {
+            return hand.groupingBy { it }.eachCount().all { it.value == 1 }
+        }
     }
 
     init {
         require(hand.length == 5) { "Hand is only allowed to be a length of five, here: ${hand.length}" }
     }
 
-    fun isFiveOfAKind(): Boolean {
-        return hand.groupingBy { it }.eachCount().any { it.value == 5 }
-    }
-
-    fun isFourOfAKind(): Boolean {
-        return hand.groupingBy { it }.eachCount().any { it.value == 4 }
-    }
-
-    fun isFullHouse(): Boolean {
-        val charCounts = hand.groupingBy { it }.eachCount()
-        return charCounts.values.sorted() == listOf(2, 3)
-    }
-
-    fun isThreeOfAKind(): Boolean {
-        return hand.groupingBy { it }.eachCount().any { it.value == 3 }
-    }
-
-    fun isTwoPair(): Boolean {
-        val charCounts = hand.groupingBy { it }.eachCount()
-        return charCounts.values.sorted() == listOf(1, 2, 2)
-    }
-
-    fun isOnePair(): Boolean {
-        val charCounts = hand.groupingBy { it }.eachCount()
-        return charCounts.values.sorted() == listOf(1, 1, 1, 2)
-    }
-
-    fun isHighCard(): Boolean {
-        return hand.groupingBy { it }.eachCount().all { it.value == 1 }
-    }
-
     fun calculateHandValue(): Int {
-        return when {
-            isFiveOfAKind() -> 7
-            isFourOfAKind() -> 6
-            isFullHouse() -> 5
-            isThreeOfAKind() -> 4
-            isTwoPair() -> 3
-            isOnePair() -> 2
-            isHighCard() -> 1
-            else -> 0
+        if (withJokers) {
+            val distinctChars = hand.toCharArray().distinct()
+            if (!distinctChars.contains('J')) return this.copy(withJokers = false).calculateHandValue()
+            var best = 0
+            for (distinctChar in distinctChars) {
+                val value = this.copy(hand = hand.replace('J', distinctChar), withJokers = false).calculateHandValue()
+                if (value > best) best = value
+            }
+            return best
+        } else {
+            return when {
+                isFiveOfAKind(hand) -> 7
+                isFourOfAKind(hand) -> 6
+                isFullHouse(hand) -> 5
+                isThreeOfAKind(hand) -> 4
+                isTwoPair(hand) -> 3
+                isOnePair(hand) -> 2
+                isHighCard(hand) -> 1
+                else -> 0
+            }
         }
     }
 
@@ -94,8 +114,9 @@ private data class Hand(val hand: String, val bid: Int, val withJokers: Boolean)
         if (handComparison != 0) return handComparison
 
         for (i in hand.indices) {
-            val thisCharValue = charValues[this.hand[i]] ?: 0
-            val otherCharValue = charValues[other.hand[i]] ?: 0
+            val charMap = if (withJokers) charValuesWithJokers else charValues
+            val thisCharValue = charMap[this.hand[i]] ?: 0
+            val otherCharValue = charMap[other.hand[i]] ?: 0
 
             val charComparison = thisCharValue.compareTo(otherCharValue)
             if (charComparison != 0) return charComparison
