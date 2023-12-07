@@ -35,14 +35,11 @@ private data class Hand(val hand: String, val bid: Int) : Comparable<Hand> {
     }
 
     fun isFiveOfAKind(): Boolean {
-        // (.) capturing group for any char
-        // \\1* matches zero or more of the same char of the previous group
-        return hand.matches("^(.)\\1*$".toRegex())
+        return hand.groupingBy { it }.eachCount().any { it.value == 5 }
     }
 
     fun isFourOfAKind(): Boolean {
-        // \\1{3} matches three or more of the same char of the previous group
-        return hand.matches("^(.)\\1{3}$".toRegex())
+        return hand.groupingBy { it }.eachCount().any { it.value == 4 }
     }
 
     fun isFullHouse(): Boolean {
