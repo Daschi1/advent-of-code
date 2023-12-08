@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day08 : Puzzle<Int, Int>("2023", "08", 2, -1) {
+class Puzzle2023Day08 : Puzzle<Int, Int>("2023", "08", 2, 6) {
     override fun solvePart1(input: List<String>): Int {
         val steps = parseDirectionsFromInput(input)
         val nodes = parseNodesFromInput(input)
