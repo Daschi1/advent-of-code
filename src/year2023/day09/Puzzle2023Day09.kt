@@ -17,7 +17,11 @@ class Puzzle2023Day09 : Puzzle<Int, Int>("2023", "09", 114, 2) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val sequences = input.map { s ->
+            val entries = s.split(" ").map { it.toInt() }.toMutableList()
+            Sequence(entries)
+        }
+        return sequences.sumOf { Sequence.predictPreviousValueInSequence(it) }
     }
 }
 
@@ -30,14 +34,30 @@ private data class Sequence(private val entries: MutableList<Int>) {
             }
             for (i in (sequences.size - 2) downTo 0) {
                 val difference = sequences[i + 1].getLastEntry()
-                sequences[i].insertNewValue(difference)
+                sequences[i].insertNewValueAtEnd(difference)
             }
             return sequences.first().getLastEntry()
+        }
+
+        fun predictPreviousValueInSequence(sequence: Sequence): Int {
+            val sequences = mutableListOf(sequence)
+            while (!sequences.last().isZero()) {
+                sequences.add(sequences.last().createDifferenceSequence())
+            }
+            for (i in (sequences.size - 2) downTo 0) {
+                val difference = sequences[i + 1].getFirstEntry()
+                sequences[i].insertNewValueAtBeginning(difference)
+            }
+            return sequences.first().getFirstEntry()
         }
     }
 
     fun isZero(): Boolean {
         return !entries.any { it != 0 }
+    }
+
+    fun getFirstEntry(): Int {
+        return entries.first()
     }
 
     fun getLastEntry(): Int {
@@ -53,7 +73,12 @@ private data class Sequence(private val entries: MutableList<Int>) {
         return Sequence(differenceEntries)
     }
 
-    fun insertNewValue(difference: Int) {
+    fun insertNewValueAtBeginning(difference: Int) {
+        val newValue = entries.first() - difference
+        entries.add(0, newValue)
+    }
+
+    fun insertNewValueAtEnd(difference: Int) {
         val newValue = entries.last() + difference
         entries.add(newValue)
     }
