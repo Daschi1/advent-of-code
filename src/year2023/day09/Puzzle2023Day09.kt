@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day09 : Puzzle<Int, Int>("2023", "09", 114, -1) {
+class Puzzle2023Day09 : Puzzle<Int, Int>("2023", "09", 114, 2) {
     override fun solvePart1(input: List<String>): Int {
         val sequences = input.map { s ->
             val entries = s.split(" ").map { it.toInt() }.toMutableList()
