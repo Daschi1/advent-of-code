@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day10 : Puzzle<Int, Int>("2023", "10", 4, -1) {
+class Puzzle2023Day10 : Puzzle<Int, Int>("2023", "10", 4, 4) {
     override fun solvePart1(input: List<String>): Int {
         val pipeSymbols = parsePipeSymbolsFromInput(input)
         val pipeNetwork = PipeNetwork(pipeSymbols)
