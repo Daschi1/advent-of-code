@@ -16,7 +16,10 @@ class Puzzle2023Day10 : Puzzle<Int, Int>("2023", "10", 4, 4) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val pipeSymbols = parsePipeSymbolsFromInput(input)
+        val pipeNetwork = PipeNetwork(pipeSymbols)
+        val insideLoop = pipeNetwork.calculatePipesInsideLoop()
+        return insideLoop.size
     }
 }
 
@@ -70,6 +73,90 @@ private data class PipeNetwork(val pipeSymbols: List<PipeSymbol>) {
         }
         return loop
     }
+
+    /**
+     * Calculates the pipes inside the loop by counting how often a ray-cast northward from each point crosses the loop.
+     * If it is an even number of times, the point is outside the loop. If it is an odd number of times, it is inside.
+     */
+    fun calculatePipesInsideLoop(): List<PipeSymbol> {
+        // replace start char with actual pipe
+        val directionsFromStart = Direction.entries.mapNotNull {
+            val next = getLeadingBack(start, it)
+            if (next != null) it else null
+        }
+        if (directionsFromStart.size != 2) throw IllegalStateException("Could not find two directions from start.")
+        val startReplacement = when (directionsFromStart.sorted()) {
+            listOf(Direction.NORTH, Direction.WEST).sorted() -> 'J'
+            listOf(Direction.NORTH, Direction.SOUTH).sorted() -> '|'
+            listOf(Direction.NORTH, Direction.EAST).sorted() -> 'L'
+            listOf(Direction.WEST, Direction.SOUTH).sorted() -> '7'
+            listOf(Direction.WEST, Direction.EAST).sorted() -> '-'
+            listOf(Direction.SOUTH, Direction.EAST).sorted() -> 'F'
+            else -> throw IllegalStateException("Could not convert start to pipe.")
+        }
+        // calculate loop and add start replacement (start not in loop calculation list)
+        val loop = findLoopFromStart().toMutableList().apply {
+            this.add(start)
+        }
+        val notLoop = pipeSymbols.filterNot { it in loop }
+
+        // calculate how often a tile hits a pipe on the loop when ray-casting north
+        val pipeLoopHitAmount = mutableMapOf<PipeSymbol, Int>()
+        for (pipe in notLoop) {
+            val loopTilesEncountered = mutableListOf<PipeSymbol>()
+            // calculate loop tiles encountered (northward of current tile)
+            for (y in pipe.y downTo 0) {
+                val current = grid[y][pipe.x]
+                if (current in loop) {
+                    if (current.isStart()) loopTilesEncountered.add(current.copy(symbol = startReplacement))
+                    else loopTilesEncountered.add(current)
+                }
+            }
+            // filter out pipes that only elongate turns
+            val filtered = loopTilesEncountered.filterNot { it.symbol == '|' }
+            var amountOfHits = 0
+            var previous = PipeSymbol.PLACEHOLDER
+            for (filteredPipe in filtered) {
+                if (filteredPipe.symbol == '-') {
+                    // is straight pipe, no turn
+                    amountOfHits++
+                } else {
+                    // only increment hits if top end of turn is viewed
+                    if (filteredPipe.symbol == 'F' || filteredPipe.symbol == '7') {
+                        if ((filteredPipe.symbol == 'F' && previous.symbol == 'L') || (filteredPipe.symbol == '7' && previous.symbol == 'J')) {
+                            // same direction turn
+                            amountOfHits += 2
+                        } else if ((filteredPipe.symbol == 'F' && previous.symbol == 'J') || (filteredPipe.symbol == '7' && previous.symbol == 'L')) {
+                            // opposite direction turn
+                            amountOfHits++
+                        }
+                    }
+                }
+                previous = filteredPipe
+            }
+            pipeLoopHitAmount[pipe] = amountOfHits
+        }
+        // only tiles with an odd number of hits are inside the loop
+        return pipeLoopHitAmount.filterNot { it.value % 2 == 0 }.keys.toList()
+    }
+
+    /*fun calculatePipesInsideLoop(): List<PipeSymbol> {
+        val loop = findLoopFromStart()
+        val notLoop = pipeSymbols.filterNot { it in loop }
+
+        val pipeLoopHitAmount = mutableMapOf<PipeSymbol, Int>()
+        for (pipe in notLoop) {
+            var amountOfHits = 0
+            for (y in pipe.y downTo 0) {
+                val current = grid[y][pipe.x]
+                if (current in loop && current.symbol == '-') {
+                    amountOfHits++
+                }
+            }
+            pipeLoopHitAmount[pipe] = amountOfHits
+        }
+        return pipeLoopHitAmount.filter { it.value % 2 != 0 }.keys.toList()
+    }*/
 
     fun getConnecting(from: PipeSymbol, to: Direction): PipeSymbol? {
         val next = get(from, to) ?: return null
