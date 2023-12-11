@@ -140,24 +140,6 @@ private data class PipeNetwork(val pipeSymbols: List<PipeSymbol>) {
         return pipeLoopHitAmount.filterNot { it.value % 2 == 0 }.keys.toList()
     }
 
-    /*fun calculatePipesInsideLoop(): List<PipeSymbol> {
-        val loop = findLoopFromStart()
-        val notLoop = pipeSymbols.filterNot { it in loop }
-
-        val pipeLoopHitAmount = mutableMapOf<PipeSymbol, Int>()
-        for (pipe in notLoop) {
-            var amountOfHits = 0
-            for (y in pipe.y downTo 0) {
-                val current = grid[y][pipe.x]
-                if (current in loop && current.symbol == '-') {
-                    amountOfHits++
-                }
-            }
-            pipeLoopHitAmount[pipe] = amountOfHits
-        }
-        return pipeLoopHitAmount.filter { it.value % 2 != 0 }.keys.toList()
-    }*/
-
     fun getConnecting(from: PipeSymbol, to: Direction): PipeSymbol? {
         val next = get(from, to) ?: return null
         return if (!next.isStart()) {
