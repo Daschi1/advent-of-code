@@ -8,21 +8,39 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day11 : Puzzle<Int, Int>("2023", "11", 374, 8410) {
+class Puzzle2023Day11 : Puzzle<Int, Long>("2023", "11", 374, 82000210) {
     override fun solvePart1(input: List<String>): Int {
         val expandedObservation = parseObservationFromInput(input).expandEmptySpace()
-        val galaxies = expandedObservation.getAllGalaxies()
-        val pairs = mutableListOf<Pair<ObservedObject, ObservedObject>>()
-        for (i in galaxies.indices) {
-            for (j in i + 1 until galaxies.size) {
-                pairs.add(galaxies[i] to galaxies[j])
-            }
+        val galaxiePairs = expandedObservation.getAllPairsOfGalaxies()
+        val rowExpansion = IntArray(expandedObservation.observation.size) { 0 }
+        val columnExpansion = IntArray(expandedObservation.observation[0].size) { 0 }
+        return galaxiePairs.sumOf {
+            expandedObservation.calculateShortestPathLengthBetween(
+                it.first,
+                it.second,
+                rowExpansion,
+                columnExpansion
+            )
         }
-        return pairs.sumOf { expandedObservation.calculateShortestPathLengthBetween(it.first, it.second) }
     }
 
-    override fun solvePart2(input: List<String>): Int {
-        return input.size
+    override fun solvePart2(input: List<String>): Long {
+        val observation = parseObservationFromInput(input)
+        val galaxiePairs = observation.getAllPairsOfGalaxies()
+
+        val rowExpansion = IntArray(observation.observation.size) { 0 }
+        observation.getEmptyRows().forEach { rowExpansion[it] = 1_000_000 }
+        val columnExpansion = IntArray(observation.observation[0].size) { 0 }
+        observation.getEmptyColumns().forEach { columnExpansion[it] = 1_000_000 }
+
+        return galaxiePairs.sumOf {
+            observation.calculateShortestPathLengthBetween(
+                it.first,
+                it.second,
+                rowExpansion,
+                columnExpansion
+            ).toLong()
+        }
     }
 }
 
@@ -93,36 +111,67 @@ private data class Observation(val observation: Array<Array<ObservedObject>>) {
         return galaxies
     }
 
+    fun getAllPairsOfGalaxies(): List<Pair<ObservedObject, ObservedObject>> {
+        val galaxies = this.getAllGalaxies()
+        val galaxiePairs = mutableListOf<Pair<ObservedObject, ObservedObject>>()
+        for (i in galaxies.indices) {
+            for (j in i + 1 until galaxies.size) {
+                galaxiePairs.add(galaxies[i] to galaxies[j])
+            }
+        }
+        return galaxiePairs
+    }
+
     /**
      * Finds the shortest path using Breadth-First Search (BFS) algorithm.
+     * @param rowExpansion is the number of how much each row should be expanded
+     * @param columnExpansion is the number of how much each column should be expanded
      */
-    fun calculateShortestPathLengthBetween(start: ObservedObject, end: ObservedObject): Int {
+    fun calculateShortestPathLengthBetween(
+        start: ObservedObject,
+        end: ObservedObject,
+        rowExpansion: IntArray,
+        columnExpansion: IntArray
+    ): Int {
+        // Get the starting and ending positions of the observed objects
         val startPosition = getPositionOf(start)
         val endPosition = getPositionOf(end)
 
+        // Initialize a 2D array to keep track of visited positions
         val visited = Array(observation.size) { BooleanArray(observation[0].size) }
-        val queue: Queue<Pair<ObservedObjectPosition, Int>> = LinkedList() // Position and steps
+
+        // Queue for BFS, storing positions and the number of steps taken to reach them
+        val queue: Queue<Pair<ObservedObjectPosition, Int>> = LinkedList()
         queue.add(Pair(startPosition, 0))
         visited[startPosition.y][startPosition.x] = true
 
+        // Perform BFS
         while (queue.isNotEmpty()) {
             val (currentPosition, steps) = queue.remove()
 
-            if (currentPosition == endPosition) return steps // Found the end
+            // Check if the current position is the destination
+            if (currentPosition == endPosition) return steps
 
-            val directions = listOf(-1 to 0, 0 to -1, 1 to 0, 0 to 1) // up, left, down, right
-            for ((dx, dy) in directions) {
-                val newX = currentPosition.x + dx
-                val newY = currentPosition.y + dy
+            // Explore adjacent positions (up, left, down, right)
+            val directions = listOf(-1 to 0, 0 to -1, 1 to 0, 0 to 1)
+            for ((directionX, directionY) in directions) {
+                val newX = currentPosition.x + directionX
+                val newY = currentPosition.y + directionY
 
+                // Check if the new position is within bounds and not visited
                 if (newX in observation[0].indices && newY in observation.indices && !visited[newY][newX]) {
+                    // Calculate extra steps based on row and column expansions
+                    val extraSteps = rowExpansion[newY] + columnExpansion[newX]
+                    val newSteps = if (extraSteps == 0) steps + 1 else steps + extraSteps
                     visited[newY][newX] = true
-                    queue.add(Pair(ObservedObjectPosition(newX, newY), steps + 1))
+                    queue.add(Pair(ObservedObjectPosition(newX, newY), newSteps))
                 }
             }
         }
-        throw IllegalArgumentException("Path between $start and $end could not be found") // Path not found
+        // Throw an exception if no path is found
+        throw IllegalArgumentException("Path between $start and $end could not be found")
     }
+
 
     fun getPositionOf(observedObject: ObservedObject): ObservedObjectPosition {
         for (y in observation.indices) {
