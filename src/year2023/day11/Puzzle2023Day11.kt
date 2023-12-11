@@ -8,7 +8,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day11 : Puzzle<Int, Int>("2023", "11", 374, -1) {
+class Puzzle2023Day11 : Puzzle<Int, Int>("2023", "11", 374, 8410) {
     override fun solvePart1(input: List<String>): Int {
         val expandedObservation = parseObservationFromInput(input).expandEmptySpace()
         val galaxies = expandedObservation.getAllGalaxies()
