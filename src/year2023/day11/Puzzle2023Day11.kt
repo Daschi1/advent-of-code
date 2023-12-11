@@ -156,6 +156,7 @@ private data class ObservedObject(val symbol: Char, val uuid: UUID = UUID.random
         return symbol == '#'
     }
 
+    @Suppress("unused")
     fun isSpace(): Boolean {
         return symbol == '.'
     }

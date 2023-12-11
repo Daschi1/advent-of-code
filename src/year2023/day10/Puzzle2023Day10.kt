@@ -234,6 +234,7 @@ private data class PipeSymbol(val symbol: Char, val x: Int, val y: Int) {
         return symbol in listOf('-', 'L', 'F')
     }
 
+    @Suppress("unused")
     fun isGround(): Boolean {
         return symbol == '.'
     }
