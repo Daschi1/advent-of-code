@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day12 : Puzzle<Int, Int>("2023", "12", 21, -1) {
+class Puzzle2023Day12 : Puzzle<Int, Int>("2023", "12", 21, 525152) {
     override fun solvePart1(input: List<String>): Int {
         val hotSpringRows = parseHotSpringRowsFromInput(input)
         var sum = 0
