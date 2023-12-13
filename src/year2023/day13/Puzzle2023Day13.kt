@@ -12,10 +12,10 @@ class Puzzle2023Day13 : Puzzle<Int, Int>("2023", "13", 405, 400) {
         val mirrorPatterns = parseMirrorPatternFromInput(input)
         var sum = 0
         for (mirrorPattern in mirrorPatterns) {
-            val vertical = mirrorPattern.findIndexWithVerticalReflection()
+            val vertical = mirrorPattern.findIndexForVerticalReflection()
             if (vertical != null) sum += vertical
             else {
-                val horizontal = mirrorPattern.findIndexWithHorizontalReflection()
+                val horizontal = mirrorPattern.findIndexForHorizontalReflection()
                 if (horizontal != null) sum += 100 * horizontal
             }
         }
@@ -23,7 +23,17 @@ class Puzzle2023Day13 : Puzzle<Int, Int>("2023", "13", 405, 400) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val mirrorPatterns = parseMirrorPatternFromInput(input)
+        var sum = 0
+        for (mirrorPattern in mirrorPatterns) {
+            val vertical = mirrorPattern.findIndexForSmudgedVerticalReflection()
+            if (vertical != null) sum += vertical
+            else {
+                val horizontal = mirrorPattern.findIndexForSmudgedHorizontalReflection()
+                if (horizontal != null) sum += 100 * horizontal
+            }
+        }
+        return sum
     }
 }
 
@@ -60,29 +70,55 @@ private fun parseMirrorPatternFromInput(input: List<String>): List<MirrorPattern
 
 private data class MirrorPattern(val height: Int, val width: Int, val pattern: Array<Array<Char>>) {
 
-    fun findIndexWithVerticalReflection(): Int? {
+    fun findIndexForVerticalReflection(skipIndex: Int = -1, smudgeY: Int = -1, smudgeX: Int = -1): Int? {
         // earliest reflection check between 0 and 1, last between one before end and end
         for (x in 1 until width) {
-            if (checkForVerticalReflectionAt(x)) return x
+            val reflectionAt = checkForVerticalReflectionAt(x, smudgeY, smudgeX)
+            if (reflectionAt && x != skipIndex) return x
         }
         return null
     }
 
-    fun findIndexWithHorizontalReflection(): Int? {
+    fun findIndexForHorizontalReflection(skipIndex: Int = -1, smudgeY: Int = -1, smudgeX: Int = -1): Int? {
         // earliest reflection check between 0 and 1, last between one before end and end
         for (y in 1 until height) {
-            if (checkForHorizontalReflectionAt(y)) return y
+            val reflectionAt = checkForHorizontalReflectionAt(y, smudgeY, smudgeX)
+            if (reflectionAt && y != skipIndex) return y
         }
         return null
     }
 
-    private fun checkForVerticalReflectionAt(index: Int): Boolean {
+    fun findIndexForSmudgedVerticalReflection(): Int? {
+        val originalIndex = findIndexForVerticalReflection()
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val index = findIndexForVerticalReflection(originalIndex ?: -1, y, x)
+                if (index != null && index != originalIndex) return index
+            }
+        }
+        return null
+    }
+
+    fun findIndexForSmudgedHorizontalReflection(): Int? {
+        val originalIndex = findIndexForHorizontalReflection()
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val index = findIndexForHorizontalReflection(originalIndex ?: -1, y, x)
+                if (index != null && index != originalIndex) return index
+            }
+        }
+        return null
+    }
+
+    private fun checkForVerticalReflectionAt(index: Int, smudgeY: Int, smudgeX: Int): Boolean {
         var reflection: Boolean
         for (x in 0 until index) {
             // index (after mirror line) + difference of x index - 1 (before mirror line)
             val mirrorX = index + (index - 1 - x)
             if (mirrorX >= width) continue
             for (y in 0 until height) {
+                // if smudge, skip evaluation
+                if (smudgeY == y && (smudgeX == x || smudgeX == mirrorX)) continue
                 reflection = pattern[y][x] == pattern[y][mirrorX]
                 if (!reflection) return false
             }
@@ -90,13 +126,15 @@ private data class MirrorPattern(val height: Int, val width: Int, val pattern: A
         return true
     }
 
-    private fun checkForHorizontalReflectionAt(index: Int): Boolean {
+    private fun checkForHorizontalReflectionAt(index: Int, smudgeY: Int, smudgeX: Int): Boolean {
         var reflection: Boolean
         for (y in 0 until index) {
             // index (after mirror line) + difference of y index - 1 (before mirror line)
             val mirrorY = index + (index - 1 - y)
             if (mirrorY >= height) continue
             for (x in 0 until width) {
+                // if smudge, skip evaluation
+                if ((smudgeY == y || smudgeY == mirrorY) && smudgeX == x) continue
                 reflection = pattern[y][x] == pattern[mirrorY][x]
                 if (!reflection) return false
             }
