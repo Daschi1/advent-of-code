@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day13 : Puzzle<Int, Int>("2023", "13", 405, -1) {
+class Puzzle2023Day13 : Puzzle<Int, Int>("2023", "13", 405, 400) {
     override fun solvePart1(input: List<String>): Int {
         val mirrorPatterns = parseMirrorPatternFromInput(input)
         var sum = 0
