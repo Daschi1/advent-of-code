@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day14 : Puzzle<Int, Int>("2023", "14", 136, -1) {
+class Puzzle2023Day14 : Puzzle<Int, Int>("2023", "14", 136, 64) {
     override fun solvePart1(input: List<String>): Int {
         val plattform = parsePlattformFromInput(input)
         var sum = 0
