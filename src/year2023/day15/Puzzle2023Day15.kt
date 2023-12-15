@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day15 : Puzzle<Int, Int>("2023", "15", 1320, -1) {
+class Puzzle2023Day15 : Puzzle<Int, Int>("2023", "15", 1320, 145) {
     override fun solvePart1(input: List<String>): Int {
         val steps = input[0].split(",")
         var sum = 0
