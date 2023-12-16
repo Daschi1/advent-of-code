@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day16 : Puzzle<Int, Int>("2023", "16", 46, -1) {
+class Puzzle2023Day16 : Puzzle<Int, Int>("2023", "16", 46, 51) {
     override fun solvePart1(input: List<String>): Int {
         val grid = parseGridFromInput(input)
         val energizedTiles = grid.sendLightFrom(0, 0, Direction.EAST)
