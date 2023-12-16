@@ -15,7 +15,35 @@ class Puzzle2023Day16 : Puzzle<Int, Int>("2023", "16", 46, 51) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val grid = parseGridFromInput(input)
+        val height = grid.height
+        val width = grid.width
+        var biggestEnergizedTilesSize = 0
+        // Top Edge
+        for (x in 0 until width) {
+            val y = 0
+            val energizedTilesSize = grid.sendLightFrom(y, x, Direction.SOUTH).size
+            if (energizedTilesSize > biggestEnergizedTilesSize) biggestEnergizedTilesSize = energizedTilesSize
+        }
+        // Right Edge
+        for (y in 0 until height) {
+            val x = width - 1
+            val energizedTilesSize = grid.sendLightFrom(y, x, Direction.WEST).size
+            if (energizedTilesSize > biggestEnergizedTilesSize) biggestEnergizedTilesSize = energizedTilesSize
+        }
+        // Bottom Edge
+        for (x in width - 1 downTo 0) {
+            val y = height - 1
+            val energizedTilesSize = grid.sendLightFrom(y, x, Direction.NORTH).size
+            if (energizedTilesSize > biggestEnergizedTilesSize) biggestEnergizedTilesSize = energizedTilesSize
+        }
+        // Left Edge
+        for (y in height - 1 downTo 0) {
+            val x = 0
+            val energizedTilesSize = grid.sendLightFrom(y, x, Direction.EAST).size
+            if (energizedTilesSize > biggestEnergizedTilesSize) biggestEnergizedTilesSize = energizedTilesSize
+        }
+        return biggestEnergizedTilesSize
     }
 }
 
@@ -32,8 +60,8 @@ private fun parseGridFromInput(input: List<String>): Grid {
 }
 
 private enum class Direction(val moveY: Int, val moveX: Int) {
-    NORTH(1, 0),
-    SOUTH(-1, 0),
+    NORTH(-1, 0),
+    SOUTH(1, 0),
     WEST(0, -1),
     EAST(0, 1);
 }
@@ -73,19 +101,19 @@ private data class Grid(val height: Int, val width: Int, val grid: Array<CharArr
             '.' -> listOf(direction)
             '/' -> {
                 when (direction) {
-                    Direction.NORTH -> listOf(Direction.WEST)
-                    Direction.SOUTH -> listOf(Direction.EAST)
-                    Direction.WEST -> listOf(Direction.NORTH)
-                    Direction.EAST -> listOf(Direction.SOUTH)
+                    Direction.NORTH -> listOf(Direction.EAST)
+                    Direction.SOUTH -> listOf(Direction.WEST)
+                    Direction.WEST -> listOf(Direction.SOUTH)
+                    Direction.EAST -> listOf(Direction.NORTH)
                 }
             }
 
             '\\' -> {
                 when (direction) {
-                    Direction.NORTH -> listOf(Direction.EAST)
-                    Direction.SOUTH -> listOf(Direction.WEST)
-                    Direction.WEST -> listOf(Direction.SOUTH)
-                    Direction.EAST -> listOf(Direction.NORTH)
+                    Direction.NORTH -> listOf(Direction.WEST)
+                    Direction.SOUTH -> listOf(Direction.EAST)
+                    Direction.WEST -> listOf(Direction.NORTH)
+                    Direction.EAST -> listOf(Direction.SOUTH)
                 }
             }
 
