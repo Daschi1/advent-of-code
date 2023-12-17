@@ -22,6 +22,8 @@ class Puzzle2023Day17 : Puzzle<Int, Int>("2023", "17", 102, -1) {
             }
             print("\n")
         }
+        println("---")
+        cost.sumOf { map.grid[it.first][it.second] }.println()
         return input.size
     }
 
@@ -42,7 +44,13 @@ private fun parseMapFromInput(input: List<String>): Map {
     return Map(height, width, grid)
 }
 
-private data class Node(val y: Int, val x: Int, val distance: Int)
+private data class Node(
+    val y: Int,
+    val x: Int,
+    val distance: Int,
+    val cameFrom: Direction,
+    val consecutiveMoves: Int
+)
 
 private enum class Direction(val stepY: Int, val stepX: Int) {
     NORTH(-1, 0),
@@ -55,7 +63,7 @@ private data class Map(val height: Int, val width: Int, val grid: Array<IntArray
     fun findMostEfficientRouteFromTo(startY: Int, startX: Int, endY: Int, endX: Int): List<Pair<Int, Int>> {
         // initial distances all "infinity"
         val distancesFromStart = Array(height) { IntArray(width) { Int.MAX_VALUE } }
-        val visitedNodes = Array(height) { BooleanArray(width) { false } }
+        val visitedNodes = Array(height) { Array(width) { BooleanArray(4) { false } } }
         // store previousNodes (y, x) of node [y][x] in the path
         val previousNodes = Array(height) { Array<Pair<Int, Int>?>(width) { null } }
 
@@ -63,7 +71,7 @@ private data class Map(val height: Int, val width: Int, val grid: Array<IntArray
         val unvisitedNodes = PriorityQueue<Node>(compareBy { it.distance })
         // setup and add startNode
         distancesFromStart[startY][startX] = 0
-        val startNode = Node(startY, startX, 0)
+        val startNode = Node(startY, startX, 0, Direction.EAST, -1)
         unvisitedNodes.add(startNode)
 
         // while there are nodes to visit
@@ -74,23 +82,30 @@ private data class Map(val height: Int, val width: Int, val grid: Array<IntArray
             if (currentNode.y == endY && currentNode.x == endX) break
 
             // skip currentNode if already been visited, else mark as visited
-            if (visitedNodes[currentNode.y][currentNode.x]) continue
-            else visitedNodes[currentNode.y][currentNode.x] = true
+            if (visitedNodes[currentNode.y][currentNode.x][currentNode.cameFrom.ordinal]) continue
+            visitedNodes[currentNode.y][currentNode.x][currentNode.cameFrom.ordinal] = true
 
             // for each possible next node
             for (nextDirection in Direction.entries) {
                 val nextY = currentNode.y + nextDirection.stepY
                 val nextX = currentNode.x + nextDirection.stepX
+
                 // if nextNode is not inside grid bounds or has been visited, skip
-                if (nextY !in 0..<height || nextX !in 0..<width || visitedNodes[nextY][nextX]) continue
+                if (nextY !in 0..<height || nextX !in 0..<width || visitedNodes[nextY][nextX][nextDirection.ordinal]) continue
+                // if consecutiveMoves in the same direction >= 3, skip
+                val isSameDirection = currentNode.cameFrom == nextDirection
+                if (isSameDirection && currentNode.consecutiveMoves >= 3) continue
+
                 // calculate nextDistance by using distancesFromStart of currentNode + the cost of travelling to nextNode
                 val nextDistance = distancesFromStart[currentNode.y][currentNode.x] + grid[nextY][nextX]
                 // if nextDistance is better than previous found distance to nextNode
                 if (nextDistance < distancesFromStart[nextY][nextX]) {
+                    // calculate consecutiveMoves
+                    val nextConsecutiveMoves = if (isSameDirection) currentNode.consecutiveMoves + 1 else 1
                     // update best distance, set previousNode on best path and add nexNode to unvisitedNodes
                     distancesFromStart[nextY][nextX] = nextDistance
                     previousNodes[nextY][nextX] = Pair(currentNode.y, currentNode.x)
-                    val nextNode = Node(nextY, nextX, nextDistance)
+                    val nextNode = Node(nextY, nextX, nextDistance, nextDirection, nextConsecutiveMoves)
                     unvisitedNodes.add(nextNode)
                 }
             }
