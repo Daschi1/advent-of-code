@@ -11,12 +11,20 @@ fun main() {
 class Puzzle2023Day17 : Puzzle<Int, Int>("2023", "17", 102, 94) {
     override fun solvePart1(input: List<String>): Int {
         val map = parseMapFromInput(input)
-        return map.runDijkstra(true)
+        return map.runDijkstra(
+            startStates = listOf(State(Point2D(0, 0), Point2D.EAST, 0)),
+            minBlocks = 0,
+            maxBlocks = 3
+        )
     }
 
     override fun solvePart2(input: List<String>): Int {
         val map = parseMapFromInput(input)
-        return map.runDijkstra(false)
+        return map.runDijkstra(
+            startStates = listOf(State(Point2D(0, 0), Point2D.EAST, 0), State(Point2D(0, 0), Point2D.SOUTH, 0)),
+            minBlocks = 4,
+            maxBlocks = 10
+        )
     }
 }
 
@@ -33,29 +41,35 @@ private fun parseMapFromInput(input: List<String>): Map {
 }
 
 private data class Map(val height: Int, val width: Int, val grid: Array<IntArray>) {
-    fun runDijkstra(partOne: Boolean): Int {
-        val visitedNodes = HashSet<Node>()
-        val queue = PriorityQueue<State>()
-        queue.add(State(Node(0, 1, Direction.EAST, 1), grid[0][1]))
-        queue.add(State(Node(1, 0, Direction.SOUTH, 1), grid[1][0]))
+    fun runDijkstra(startStates: List<State>, minBlocks: Int, maxBlocks: Int): Int {
+        val end = Point2D(height - 1, width - 1)
 
-        while (queue.isNotEmpty()) {
-            val currentNode = queue.remove()
-            if (currentNode.node in visitedNodes) continue
-            visitedNodes.add(currentNode.node)
+        val costsFromStart = mutableMapOf<State, Int>().withDefault { Int.MAX_VALUE }
+        val unvisitedNodes = PriorityQueue<StateWithCost>()
 
-            if (currentNode.node.y == height - 1 && currentNode.node.x == width - 1 &&
-                (partOne || currentNode.node.steps > 2)
-            ) {
+        for (state in startStates) {
+            costsFromStart[state] = 0
+            unvisitedNodes.add(StateWithCost(state, 0))
+        }
+
+        while (unvisitedNodes.isNotEmpty()) {
+            val currentNode = unvisitedNodes.poll()
+
+            if (currentNode.state.point == end) {
                 return currentNode.cost
             }
-            if (partOne) {
-                currentNode.addNextPartOne(queue, grid)
-            } else {
-                currentNode.addNextPartTwo(queue, grid)
-            }
+
+            currentNode.state.next(minBlocks, maxBlocks)
+                .filter { it.point.y in 0..<height && it.point.x in 0..<width }
+                .forEach { next ->
+                    val nextCost = currentNode.cost + grid[next.point.y][next.point.x]
+                    if (nextCost < costsFromStart.getValue(next)) {
+                        costsFromStart[next] = nextCost
+                        unvisitedNodes.add(StateWithCost(next, nextCost))
+                    }
+                }
         }
-        return -1
+        error("Could not find a path")
     }
 
     override fun equals(other: Any?): Boolean {
@@ -77,63 +91,40 @@ private data class Map(val height: Int, val width: Int, val grid: Array<IntArray
     }
 }
 
-private enum class Direction(val moveY: Int, val moveX: Int) {
-    NORTH(-1, 0), EAST(0, 1), SOUTH(1, 0), WEST(0, -1);
+private data class Point2D(val y: Int, val x: Int) {
+    operator fun plus(other: Point2D): Point2D = Point2D(y + other.y, x + other.x)
 
-    fun turnLeft(): Direction = when (this) {
-        NORTH -> WEST
-        WEST -> SOUTH
-        SOUTH -> EAST
-        EAST -> NORTH
-    }
+    operator fun times(other: Int): Point2D = Point2D(y * other, x * other)
 
-    fun turnRight(): Direction = when (this) {
-        NORTH -> EAST
-        EAST -> SOUTH
-        SOUTH -> WEST
-        WEST -> NORTH
+    companion object {
+        val NORTH = Point2D(-1, 0)
+        val EAST = Point2D(0, 1)
+        val SOUTH = Point2D(1, 0)
+        val WEST = Point2D(0, -1)
     }
 }
 
-private data class Node(val y: Int, val x: Int, val direction: Direction, val steps: Int)
+private data class State(val point: Point2D, val dir: Point2D, val blocks: Int) {
+    fun next(minBlocks: Int, maxBlocks: Int) = buildList {
+        when {
+            blocks < minBlocks -> add(copy(point = point + dir, dir = dir, blocks = blocks + 1))
+            else -> {
+                val left = Point2D(dir.x, dir.y)
+                val right = Point2D(-dir.x, -dir.y)
 
-private class State(val node: Node, val cost: Int) : Comparable<State> {
-    override fun compareTo(other: State): Int {
-        var comparison = cost - other.cost
-        if (comparison == 0 && node.direction == other.node.direction) {
-            comparison = node.steps - other.node.steps
-        }
-        if (comparison == 0) {
-            comparison = other.node.y + other.node.x - node.y - node.x
-        }
-        return comparison
-    }
+                add(copy(point = point + left, dir = left, blocks = 1))
+                add(copy(point = point + right, dir = right, blocks = 1))
 
-    private fun addNextWhenInBounds(states: MutableCollection<State>, direction: Direction, costs: Array<IntArray>) {
-        val nextY = node.y + direction.moveY
-        val nextX = node.x + direction.moveX
-        if (nextY in costs.indices && nextX in costs[0].indices) {
-            val nextSteps = if (node.direction == direction) node.steps + 1 else 0
-            val nextState = State(Node(nextY, nextX, direction, nextSteps), cost + costs[nextY][nextX])
-            states.add(nextState)
+                if (blocks < maxBlocks) {
+                    add(copy(point = point + dir, dir = dir, blocks = blocks + 1))
+                }
+            }
         }
     }
+}
 
-    fun addNextPartOne(states: MutableCollection<State>, costs: Array<IntArray>) {
-        if (node.steps < 2) {
-            addNextWhenInBounds(states, node.direction, costs)
-        }
-        addNextWhenInBounds(states, node.direction.turnLeft(), costs)
-        addNextWhenInBounds(states, node.direction.turnRight(), costs)
-    }
-
-    fun addNextPartTwo(states: MutableCollection<State>, costs: Array<IntArray>) {
-        if (node.steps < 9) {
-            addNextWhenInBounds(states, node.direction, costs)
-        }
-        if (node.steps > 2) {
-            addNextWhenInBounds(states, node.direction.turnLeft(), costs)
-            addNextWhenInBounds(states, node.direction.turnRight(), costs)
-        }
+private data class StateWithCost(val state: State, val cost: Int) : Comparable<StateWithCost> {
+    override fun compareTo(other: StateWithCost): Int {
+        return cost compareTo other.cost
     }
 }
