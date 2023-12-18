@@ -10,12 +10,12 @@ fun main() {
 class Puzzle2023Day18 : Puzzle<Int, Long>("2023", "18", 62, 952408144115) {
     override fun solvePart1(input: List<String>): Int {
         val digPlan = parseDigPlanFromInput(input)
-        val ground = digPlan.digTrenches().ground
-        return digPlan.countEnclosedChars(ground).toInt()
+        return digPlan.calculateCubicMeters().toInt()
     }
 
     override fun solvePart2(input: List<String>): Long {
-        return -1
+        val digPlan = parseActualDigPlanFromInput(input)
+        return digPlan.calculateCubicMeters()
     }
 }
 
@@ -24,174 +24,67 @@ private fun parseDigPlanFromInput(input: List<String>): DigPlan {
     for (s in input) {
         val split = s.split(" ")
         val direction = when (split[0]) {
-            "U" -> Direction.NORTH
-            "D" -> Direction.SOUTH
-            "L" -> Direction.WEST
-            "R" -> Direction.EAST
+            "U" -> Point.NORTH
+            "D" -> Point.SOUTH
+            "L" -> Point.WEST
+            "R" -> Point.EAST
             else -> error("Could not match '${split[0]}' to any Direction")
         }
         val amount = split[1].toInt()
-        val color = split[2].removePrefix("(").removeSuffix(")")
-        val digInstruction = DigInstruction(direction, amount, color)
+        val digInstruction = DigInstruction(direction, amount)
         digInstructions.add(digInstruction)
     }
     return DigPlan(digInstructions)
 }
 
+private fun parseActualDigPlanFromInput(input: List<String>): DigPlan {
+    val digInstructions = mutableListOf<DigInstruction>()
+    for (s in input) {
+        val color = s.split(" ")[2].removePrefix("(").removeSuffix(")")
+        val direction = when (color.last()) {
+            '0' -> Point.EAST
+            '1' -> Point.SOUTH
+            '2' -> Point.WEST
+            '3' -> Point.NORTH
+            else -> error("Could not match '${color.last()}' to any Direction")
+        }
+        // get rid of # and direction number
+        val amount = color.drop(1).dropLast(1).toInt(16)
+        val digInstruction = DigInstruction(direction, amount)
+        digInstructions.add(digInstruction)
+    }
+    return DigPlan(digInstructions)
+}
+
+private data class DigInstruction(val direction: Point, val amount: Int)
+
 private data class DigPlan(val digInstructions: List<DigInstruction>) {
-    fun digTrenches(): Ground {
-        val ground = Ground()
-        var currentTile = Pair(ground.ground.size / 2, ground.ground[0].size / 2)
+    fun calculateCubicMeters(): Long {
+        val borderTiles = digInstructions.sumOf { it.amount }
+        val vertices = digInstructions.runningFold(Point(0, 0)) { last, dig -> last + dig.direction * dig.amount }
+        val interiorTiles = shoelaceArea(vertices) - (borderTiles / 2) + 1
 
-        for (digInstruction in digInstructions) {
-            val nextY = digInstruction.direction.moveY * digInstruction.amount
-            val nextX = digInstruction.direction.moveX * digInstruction.amount
-            val nextTile = Pair(currentTile.first + nextY, currentTile.second + nextX)
-
-            ground.digLine(currentTile, nextTile, digInstruction.direction)
-            currentTile = nextTile
-        }
-        return ground
+        return interiorTiles + borderTiles
     }
 
-    fun countEnclosedChars(grid: Array<CharArray>): Long {
-        val rows = grid.size
-        val cols = grid[0].size
-        var countHash = 0L
-
-        // Count all '#' characters
-        for (i in 0 until rows) {
-            for (j in 0 until cols) {
-                if (grid[i][j] == '#') {
-                    countHash++
-                }
-            }
-        }
-
-        // Iterative flood fill using a queue
-        fun floodFill(startX: Int, startY: Int) {
-            val queue: ArrayDeque<Pair<Int, Int>> = ArrayDeque()
-            queue.add(Pair(startX, startY))
-
-            while (queue.isNotEmpty()) {
-                val (x, y) = queue.removeFirst()
-
-                if (x !in 0 until rows || y !in 0 until cols || grid[x][y] != '.') {
-                    continue
-                }
-
-                grid[x][y] = 'o' // Mark as visited
-
-                // Add adjacent cells to queue
-                queue.add(Pair(x + 1, y))
-                queue.add(Pair(x - 1, y))
-                queue.add(Pair(x, y + 1))
-                queue.add(Pair(x, y - 1))
-            }
-        }
-
-        // Apply flood fill from the edges
-        for (i in 0 until rows) {
-            floodFill(i, 0)
-            floodFill(i, cols - 1)
-        }
-        for (j in 0 until cols) {
-            floodFill(0, j)
-            floodFill(rows - 1, j)
-        }
-
-        // Count enclosed '.' characters
-        var countEnclosedDots = 0L
-        for (i in 0 until rows) {
-            for (j in 0 until cols) {
-                if (grid[i][j] == '.') {
-                    countEnclosedDots++
-                }
-            }
-        }
-
-        return countHash + countEnclosedDots
+    private fun shoelaceArea(vertices: List<Point>): Long {
+        return vertices.indices.sumOf { i ->
+            val (x1, y1) = vertices[i]
+            val (x2, y2) = vertices[(i + 1) % vertices.size]
+            x1.toLong() * y2 - y1.toLong() * x2
+        } / 2
     }
 }
 
-private data class DigInstruction(val direction: Direction, val amount: Int, val hexCode: String)
-
-private enum class Direction(val moveY: Int, val moveX: Int) {
-    NORTH(-1, 0),
-    SOUTH(1, 0),
-    WEST(0, -1),
-    EAST(0, 1)
-}
-
-private class Ground {
-    // just use a big array as a starting base, don't care about expansion!
-    var ground = Array(1000) { CharArray(1000) { '.' } }
-        private set
-    private var xOffset = 0
-    private var yOffset = 0
-
-    fun digTile(tile: Pair<Int, Int>) {
-        val internalY = tile.first + yOffset
-        val internalX = tile.second + xOffset
-        ensureCapacity(internalY, internalX)
-        ground[internalY][internalX] = '#'
+private data class Point(val x: Int, val y: Int) {
+    companion object {
+        val NORTH = Point(0, -1)
+        val SOUTH = Point(0, 1)
+        val EAST = Point(1, 0)
+        val WEST = Point(-1, 0)
     }
 
-    fun digLine(startTile: Pair<Int, Int>, endTile: Pair<Int, Int>, direction: Direction) {
-        val internalEndY = endTile.first + yOffset
-        val internalEndX = endTile.second + xOffset
-        ensureCapacity(internalEndY, internalEndX)
+    operator fun plus(other: Point): Point = Point(x + other.x, y + other.y)
 
-        when (direction) {
-            Direction.NORTH, Direction.SOUTH -> {
-                val startX = startTile.second + xOffset
-                for (y in minOf(startTile.first + yOffset, internalEndY)..maxOf(
-                    startTile.first + yOffset,
-                    internalEndY
-                )) {
-                    digTile(Pair(y, startX))
-                }
-            }
-
-            Direction.WEST, Direction.EAST -> {
-                val startY = startTile.first + yOffset
-                for (x in minOf(startTile.second + xOffset, internalEndX)..maxOf(
-                    startTile.second + xOffset,
-                    internalEndX
-                )) {
-                    digTile(Pair(startY, x))
-                }
-            }
-        }
-    }
-
-    private fun ensureCapacity(y: Int, x: Int) {
-        var newGround = ground
-        if (y < 0) {
-            val additionalRows = Array(-y) { CharArray(ground[0].size) { '.' } }
-            newGround = additionalRows + ground
-            yOffset += -y
-        }
-
-        if (x < 0) {
-            newGround = newGround.map { row ->
-                CharArray(-x) { '.' } + row
-            }.toTypedArray()
-            xOffset += -x
-        }
-
-        val maxY = maxOf(y, newGround.size - 1)
-        val maxX = maxOf(x, newGround[0].size - 1)
-        if (maxY >= newGround.size || maxX >= newGround[0].size) {
-            val expandedGround = Array(maxY + 1) { CharArray(maxX + 1) { '.' } }
-            for (i in newGround.indices) {
-                for (j in newGround[i].indices) {
-                    expandedGround[i][j] = newGround[i][j]
-                }
-            }
-            newGround = expandedGround
-        }
-
-        ground = newGround
-    }
+    operator fun times(other: Int): Point = Point(x * other, y * other)
 }
