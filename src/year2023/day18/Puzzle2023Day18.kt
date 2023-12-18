@@ -7,15 +7,15 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day18 : Puzzle<Int, Int>("2023", "18", 62, -1) {
+class Puzzle2023Day18 : Puzzle<Int, Long>("2023", "18", 62, 952408144115) {
     override fun solvePart1(input: List<String>): Int {
         val digPlan = parseDigPlanFromInput(input)
         val ground = digPlan.digTrenches().ground
-        return digPlan.countEnclosedChars(ground)
+        return digPlan.countEnclosedChars(ground).toInt()
     }
 
-    override fun solvePart2(input: List<String>): Int {
-        return input.size
+    override fun solvePart2(input: List<String>): Long {
+        return -1
     }
 }
 
@@ -41,8 +41,7 @@ private fun parseDigPlanFromInput(input: List<String>): DigPlan {
 private data class DigPlan(val digInstructions: List<DigInstruction>) {
     fun digTrenches(): Ground {
         val ground = Ground()
-        // just use a big array as a starting base, don't care about expansion!
-        var currentTile = Pair(500, 500)
+        var currentTile = Pair(ground.ground.size / 2, ground.ground[0].size / 2)
 
         for (digInstruction in digInstructions) {
             val nextY = digInstruction.direction.moveY * digInstruction.amount
@@ -55,10 +54,10 @@ private data class DigPlan(val digInstructions: List<DigInstruction>) {
         return ground
     }
 
-    fun countEnclosedChars(grid: Array<CharArray>): Int {
+    fun countEnclosedChars(grid: Array<CharArray>): Long {
         val rows = grid.size
         val cols = grid[0].size
-        var countHash = 0
+        var countHash = 0L
 
         // Count all '#' characters
         for (i in 0 until rows) {
@@ -102,7 +101,7 @@ private data class DigPlan(val digInstructions: List<DigInstruction>) {
         }
 
         // Count enclosed '.' characters
-        var countEnclosedDots = 0
+        var countEnclosedDots = 0L
         for (i in 0 until rows) {
             for (j in 0 until cols) {
                 if (grid[i][j] == '.') {
