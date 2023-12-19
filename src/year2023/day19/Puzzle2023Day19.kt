@@ -1,6 +1,7 @@
 package year2023.day19
 
 import Puzzle
+import println
 
 fun main() {
     val puzzle = Puzzle2023Day19()
@@ -23,7 +24,21 @@ class Puzzle2023Day19 : Puzzle<Int, Long>("2023", "19", 19114, 167409079868000) 
     }
 
     override fun solvePart2(input: List<String>): Long {
-        return -1
+        val workflows = parseWorkflowsFromInput(input)
+
+        var accepted = 0L
+        for (x in 1..4000) {
+            for (m in 1..4000) {
+                for (a in 1..4000) {
+                    for (s in 1..4000) {
+                        val part = Part(x, m, a, s)
+                        if (isPartAccepted(workflows, part)) accepted++
+                    }
+                }
+            }
+        }
+        accepted.println()
+        return accepted
     }
 }
 
