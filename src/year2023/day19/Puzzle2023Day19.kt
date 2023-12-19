@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day19 : Puzzle<Int, Int>("2023", "19", 19114, -1) {
+class Puzzle2023Day19 : Puzzle<Int, Long>("2023", "19", 19114, 167409079868000) {
     override fun solvePart1(input: List<String>): Int {
         val workflows = parseWorkflowsFromInput(input)
         val parts = parsePartsFromInput(input)
@@ -22,8 +22,8 @@ class Puzzle2023Day19 : Puzzle<Int, Int>("2023", "19", 19114, -1) {
         return sum
     }
 
-    override fun solvePart2(input: List<String>): Int {
-        return input.size
+    override fun solvePart2(input: List<String>): Long {
+        return -1
     }
 }
 
