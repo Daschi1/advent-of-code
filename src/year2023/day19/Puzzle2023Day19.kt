@@ -1,7 +1,6 @@
 package year2023.day19
 
 import Puzzle
-import println
 
 fun main() {
     val puzzle = Puzzle2023Day19()
@@ -26,19 +25,15 @@ class Puzzle2023Day19 : Puzzle<Int, Long>("2023", "19", 19114, 167409079868000) 
     override fun solvePart2(input: List<String>): Long {
         val workflows = parseWorkflowsFromInput(input)
 
-        var accepted = 0L
-        for (x in 1..4000) {
-            for (m in 1..4000) {
-                for (a in 1..4000) {
-                    for (s in 1..4000) {
-                        val part = Part(x, m, a, s)
-                        if (isPartAccepted(workflows, part)) accepted++
-                    }
-                }
-            }
-        }
-        accepted.println()
-        return accepted
+        val acceptedParts = calculateAcceptedParts(
+            workflows, mapOf(
+                'x' to (1..4000),
+                'm' to (1..4000),
+                'a' to (1..4000),
+                's' to (1..4000)
+            ), "in"
+        )
+        return acceptedParts
     }
 }
 
@@ -66,7 +61,7 @@ private fun parseWorkflowsFromInput(input: List<String>): Map<String, Workflow> 
 
         workflows[name] = Workflow(name, steps)
     }
-    if (!workflows.contains("in")) error("Could not parse a workflow named 'in'")
+    if (!workflows.contains("in")) error("Could find a workflow named 'in'")
     return workflows
 }
 
@@ -95,6 +90,43 @@ private fun isPartAccepted(workflows: Map<String, Workflow>, part: Part): Boolea
     return currentWorkflowName == "A"
 }
 
+private fun calculateAcceptedParts(
+    workflows: Map<String, Workflow>,
+    acceptedRanges: Map<Char, IntRange>,
+    workflowIn: String
+): Long {
+    return when (workflowIn) {
+        "A" -> acceptedRanges.values.map { it.size().toLong() }.reduce(Long::times)
+        "R" -> 0
+        else -> {
+            val newAcceptedRanges = acceptedRanges.toMutableMap()
+            val nextWorkflow = workflows[workflowIn] ?: error("Could not find a workflow named '$workflowIn'")
+            nextWorkflow.steps.sumOf { step ->
+                when (step.parameter) {
+                    ' ' -> calculateAcceptedParts(workflows, newAcceptedRanges, step.nextStep)
+                    else -> {
+                        val parameter = step.parameter
+                        val newPassingRange = newAcceptedRanges.getValue(parameter).combineWith(step.getPassingRange())
+                        val newPassingRangeReversed =
+                            newAcceptedRanges.getValue(parameter).combineWith(step.getReversedPassingRange())
+
+                        newAcceptedRanges[parameter] = newPassingRange
+                        calculateAcceptedParts(
+                            workflows,
+                            newAcceptedRanges,
+                            step.nextStep
+                        ).also { newAcceptedRanges[parameter] = newPassingRangeReversed }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun IntRange.size() = last - start + 1
+
+private fun IntRange.combineWith(other: IntRange) = maxOf(first, other.first)..minOf(last, other.last)
+
 private data class Workflow(val name: String, val steps: List<WorkflowStep>) {
     fun calculateNextStep(part: Part): String {
         for (step in steps) {
@@ -107,7 +139,7 @@ private data class Workflow(val name: String, val steps: List<WorkflowStep>) {
 
 private data class WorkflowStep(val condition: String, val nextStep: String) {
 
-    private val parameter: Char
+    val parameter: Char
     private val comparison: Char
     private val value: Int
 
@@ -135,6 +167,24 @@ private data class WorkflowStep(val condition: String, val nextStep: String) {
         return when (comparison) {
             '<' -> toEvaluate < value
             '>' -> toEvaluate > value
+            else -> error("Invalid comparison '$comparison'")
+        }
+    }
+
+    fun getPassingRange(): IntRange {
+        if (parameter == ' ' && comparison == ' ' && value == -1) return 1..4000
+        return when (comparison) {
+            '<' -> 1..<value
+            '>' -> value + 1..4000
+            else -> error("Invalid comparison '$comparison'")
+        }
+    }
+
+    fun getReversedPassingRange(): IntRange {
+        if (parameter == ' ' && comparison == ' ' && value == -1) return IntRange(1, 4000)
+        return when (comparison) {
+            '<' -> value..4000
+            '>' -> 1..value
             else -> error("Invalid comparison '$comparison'")
         }
     }
