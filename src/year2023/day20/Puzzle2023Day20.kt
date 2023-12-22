@@ -48,6 +48,8 @@ class Puzzle2023Day20 : Puzzle<Int, Int>("2023", "20", 32000000, -1) {
     }
 
     override fun solvePart2(input: List<String>): Int {
+        // no test input / result provided for part2
+        if (input.isEmpty()) return -1
         return input.size
     }
 }
