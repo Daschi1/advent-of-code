@@ -8,7 +8,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day21 : Puzzle<Int, Int>("2023", "21", 16, -1) {
+class Puzzle2023Day21 : Puzzle<Int, Int>("2023", "21", 16, 1594) {
     override fun solvePart1(input: List<String>): Int {
         val grid = parseGridFromInput(input)
         // test input for part1 requires only 6 iterations
@@ -74,9 +74,9 @@ private class Grid(val height: Int, val width: Int, val grid: Array<CharArray>, 
     }
 
     private fun isValidNextTile(y: Int, x: Int): Boolean {
-        if (y !in 0..<height) return false
-        if (x !in 0..<width) return false
-        return grid[y][x] == '.'
+//        if (y !in 0..<height) return false
+//        if (x !in 0..<width) return false
+        return grid[y % height][x % width] == '.'
     }
 }
 
