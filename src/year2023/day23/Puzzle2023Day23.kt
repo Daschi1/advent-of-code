@@ -28,7 +28,34 @@ class Puzzle2023Day23 : Puzzle<Int, Int>("2023", "23", 94, 154) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        // Parse the grid from the input strings
+        val grid = parseGridFromInput(input)
+
+        // Map to hold junction points and their neighboring junctions with distances
+        val junctions = mutableMapOf<Point2D, MutableList<Pair<Point2D, Int>>>().apply {
+            put(grid.start, mutableListOf())
+            put(grid.end, mutableListOf())
+        }
+
+        // Identify junction points in the grid
+        grid.grid.forEachIndexed { row, chars ->
+            chars.forEachIndexed { col, char ->
+                if (char == '.') {
+                    val point = Point2D(col, row)
+                    if (point.isJunction(grid)) {
+                        junctions[point] = mutableListOf()
+                    }
+                }
+            }
+        }
+
+        // Calculate distances between junctions
+        junctions.keys.forEach { junction ->
+            grid.calculateDistancesToOtherJunctions(junction, junctions)
+        }
+
+        // Find the maximum value based on the junctions map
+        return grid.findMax { current -> junctions.getValue(current) }
     }
 }
 
@@ -80,6 +107,37 @@ private data class Grid(
         return maxDistance
     }
 
+    fun calculateDistancesToOtherJunctions(
+        startJunction: Point2D,
+        junctions: MutableMap<Point2D, MutableList<Pair<Point2D, Int>>>
+    ) {
+        var current = setOf(startJunction)
+        val visited = mutableSetOf(startJunction)
+        var distance = 0
+
+        // Loop until there are no more points to process
+        while (current.isNotEmpty()) {
+            distance++
+            current = current.flatMap { currentJunction ->
+                // For each junction, get its neighbours
+                currentJunction.getNeighbours()
+                    .filter { it.isValidPoint(this) }
+                    .filter { it !in visited }
+                    .mapNotNull { neighbor ->
+                        // If neighbor is a junction, add it with its distance
+                        if (neighbor in junctions) {
+                            junctions.getValue(startJunction).add(neighbor to distance)
+                            null // Don't add to the next current set
+                        } else {
+                            // If not, add it to visited and process it in the next iteration
+                            visited.add(neighbor)
+                            neighbor // Add to the next current set
+                        }
+                    }
+            }.toSet()
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Grid) return false
@@ -113,15 +171,20 @@ private data class Point2D(val x: Int, val y: Int) {
     }
 
     fun move(direction: Char): Point2D = when (direction) {
-        // move in direction of slope, else return self
-        '>' -> copy(x = x + 1)
-        '<' -> copy(x = x - 1)
-        'v' -> copy(y = y + 1)
-        '^' -> copy(y = y - 1)
-        else -> this
+        '>' -> copy(x = x + 1) // Move right
+        '<' -> copy(x = x - 1) // Move left
+        'v' -> copy(y = y + 1) // Move down
+        '^' -> copy(y = y - 1) // Move up
+        else -> this           // Stay in place for any other character
     }
 
     fun isValidPoint(grid: Grid): Boolean {
+        // Check if point is within grid bounds and a valid stepping point
         return y in grid.grid.indices && x in grid.grid.first().indices && grid.grid[y][x] in ".<>^v"
+    }
+
+    fun isJunction(grid: Grid): Boolean {
+        // Junction is defined as a point with more than two valid neighbors
+        return getNeighbours().count { it.isValidPoint(grid) } > 2
     }
 }
