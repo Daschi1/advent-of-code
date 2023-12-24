@@ -14,7 +14,8 @@ class Puzzle2023Day22 : Puzzle<Int, Int>("2023", "22", 5, 7) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        val brickTower = parseBrickTowerFromInput(input)
+        return brickTower.calculateChainReactionDisintegrationBrickAmount()
     }
 }
 
@@ -87,6 +88,34 @@ private class BrickTower(inputBricks: List<Brick>) {
         // The total number of bricks minus the number of non-removable bricks
         // gives the number of bricks that can be safely removed
         return bricks.size - nonRemovableBricksCount
+    }
+
+    fun calculateChainReactionDisintegrationBrickAmount(): Int {
+        return bricks.sumOf { brick ->
+            // Initialize the set of falling bricks with the current brick
+            val fallingBricks = mutableSetOf(brick.id)
+
+            // Get the set of bricks directly supported by the current brick
+            var bricksToCheck = supports.getOrDefault(brick.id, emptySet())
+
+            // Process the chain reaction of falling bricks
+            while (bricksToCheck.isNotEmpty()) {
+                val nextBricksToCheck = mutableSetOf<Int>()
+                for (supportedBrick in bricksToCheck) {
+                    // If all bricks supporting this brick are falling, it will also fall
+                    if (supported.getValue(supportedBrick).all { it in fallingBricks }) {
+                        fallingBricks.add(supportedBrick)
+                        // Add the bricks supported by this newly falling brick for the next iteration
+                        nextBricksToCheck.addAll(supports.getOrDefault(supportedBrick, emptySet()))
+                    }
+                }
+                // Update the set of bricks to check in the next iteration
+                bricksToCheck = nextBricksToCheck
+            }
+
+            // Return the number of additional bricks that would fall, excluding the initially removed brick
+            fallingBricks.size - 1
+        }
     }
 }
 
