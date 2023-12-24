@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day22 : Puzzle<Int, Int>("2023", "22", 5, -1) {
+class Puzzle2023Day22 : Puzzle<Int, Int>("2023", "22", 5, 7) {
     override fun solvePart1(input: List<String>): Int {
         val brickTower = parseBrickTowerFromInput(input)
         return brickTower.calculateSafeDisintegrationBrickAmount()
