@@ -7,7 +7,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day23 : Puzzle<Int, Int>("2023", "23", 94, -1) {
+class Puzzle2023Day23 : Puzzle<Int, Int>("2023", "23", 94, 154) {
     override fun solvePart1(input: List<String>): Int {
         // Parse the grid from the input strings
         val grid = parseGridFromInput(input)
