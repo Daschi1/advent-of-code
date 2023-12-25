@@ -43,6 +43,7 @@ class Puzzle2023Day25 : Puzzle<Int, Int>("2023", "25", 54, -1) {
     }
 
     override fun solvePart2(input: List<String>): Int {
-        return input.size
+        // There's no real puzzle here. It just requires obtaining all the previous stars of this year to solve it.
+        return -1
     }
 }
