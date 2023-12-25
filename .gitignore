@@ -1,5 +1,6 @@
 .gradle
 .idea
 build
-# Ignore files like Day1.txt, Day2.txt, ..., Day123456.txt, etc.
-Day[0-9]+.txt
+# Ignore actual inputs, but allow test input files
+Day[0-9]*.txt
+!Day[0-9]*_*.txt
