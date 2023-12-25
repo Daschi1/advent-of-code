@@ -1,6 +1,11 @@
 package year2023.day24
 
 import Puzzle
+import eq
+import minus
+import plus
+import times
+import z3
 import kotlin.math.sign
 
 fun main() {
@@ -8,7 +13,7 @@ fun main() {
     puzzle.testAndSolveAndPrint()
 }
 
-class Puzzle2023Day24 : Puzzle<Int, Int>("2023", "24", 2, -1) {
+class Puzzle2023Day24 : Puzzle<Int, Long>("2023", "24", 2, 47) {
     override fun solvePart1(input: List<String>): Int {
         // Parse the input to get a list of Hails
         val hails = parseHailsFromInput(input)
@@ -19,8 +24,42 @@ class Puzzle2023Day24 : Puzzle<Int, Int>("2023", "24", 2, -1) {
         return calculateSumBasedOnConditions(hails, range)
     }
 
-    override fun solvePart2(input: List<String>): Int {
-        return input.size
+    //** Credits: https://github.com/madisp/aoc_kotlin/blob/main/2023/src/main/kotlin/day24.kt */
+    override fun solvePart2(input: List<String>): Long {
+        // Parse the input to get a list of Hails
+        val hails = parseHailsFromInput(input)
+
+        return z3 {
+            // Define variables for target positions and velocities
+            val targetPosX = int("targetPosX")
+            val targetPosY = int("targetPosY")
+            val targetPosZ = int("targetPosZ")
+            val velocityX = int("velocityX")
+            val velocityY = int("velocityY")
+            val velocityZ = int("velocityZ")
+
+            // Define delta time variables for calculations
+            val deltaTime1 = int("deltaTime1")
+            val deltaTime2 = int("deltaTime2")
+            val deltaTime3 = int("deltaTime3")
+
+            val deltaTimes = listOf(deltaTime1, deltaTime2, deltaTime3)
+
+            // Construct equations based on the first three hails
+            val equations = hails.take(3).flatMapIndexed { index, hail ->
+                listOf(
+                    (targetPosX - hail.position[0]) eq (deltaTimes[index] * (hail.vector[0].toLong() - velocityX)),
+                    (targetPosY - hail.position[1]) eq (deltaTimes[index] * (hail.vector[1].toLong() - velocityY)),
+                    (targetPosZ - hail.position[2]) eq (deltaTimes[index] * (hail.vector[2].toLong() - velocityZ)),
+                )
+            }
+
+            // Solve the constructed equations
+            solve(equations)
+
+            // Calculate and return the sum of target positions
+            eval(targetPosX + targetPosY + targetPosZ).toLong()
+        }
     }
 }
 
